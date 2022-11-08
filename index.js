@@ -27,6 +27,25 @@ async function dbConnect() {
 
 dbConnect();
 
+const Product = client.db('expressJournalist').collection('services');
+const User = client.db('expressJournalist').collection('reviews');
+
+// data mongodb theke pawar jonno
+app.get('/services', async (req, res) => {
+    try {
+        const query = {};
+        const cursor = Product.find(query);
+        const services = await cursor.toArray();
+        res.send(services);
+    } catch (error) {
+        console.log(error.name.red, error.message.bold);
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 
 app.get('/', (req, res) => {
     res.send('Journalist service server is running')

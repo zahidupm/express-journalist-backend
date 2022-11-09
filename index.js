@@ -30,6 +30,44 @@ dbConnect();
 const Product = client.db('expressJournalist').collection('services');
 const User = client.db('expressJournalist').collection('reviews');
 
+// review ====
+// data transfer
+app.post('/reviews', async (req, res) => {
+    try {
+        const result = await User.insertOne(req.body);
+        // console.log(result);
+
+        if(result.insertedId) {
+            res.send({
+                success: true,
+                message: `Successfully created the ${req.body.title} with id ${result.insertedId}`
+            })
+        }
+    } catch (error) {
+        console.log(error.name.red, error.message.bold);
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+// get the data
+app.get('/review/:id', async (req, res) => {
+    try {
+        const id  = req.params;
+        const review = await User.findOne({ _id: ObjectId(id) });
+        res.send(review)
+
+    } catch(error) {
+        console.log(error.name.red, error.message.bold);
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 // data mongodb theke pawar jonno
 app.get('/services', async (req, res) => {
     try {

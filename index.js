@@ -46,6 +46,27 @@ app.get('/services', async (req, res) => {
     }
 })
 
+// data transfer
+app.post('/services', async (req, res) => {
+    try {
+        const result = await Product.insertOne(req.body);
+        // console.log(result);
+
+        if(result.insertedId) {
+            res.send({
+                success: true,
+                message: `Successfully created the ${req.body.title} with id ${result.insertedId}`
+            })
+        }
+    } catch (error) {
+        console.log(error.name.red, error.message.bold);
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 // single service
 app.get('/service/:id', async (req, res) => {
     try {

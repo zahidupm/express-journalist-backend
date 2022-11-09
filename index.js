@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 require('colors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -42,6 +42,21 @@ app.get('/services', async (req, res) => {
         res.send({
             success: false,
             message: error.message
+        })
+    }
+})
+
+// single service
+app.get('/service/:id', async (req, res) => {
+    try {
+        const id  = req.params;
+        const product = await Product.findOne({ _id: ObjectId(id) });
+        res.send(product)
+    } catch (error) {
+        console.log(error.name.red, error.message.bold);
+        res.send({
+            success: false,
+            error: error.message
         })
     }
 })

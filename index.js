@@ -53,12 +53,33 @@ app.post('/reviews', async (req, res) => {
 })
 
 // get the data
-app.get('/review/:id', async (req, res) => {
+app.get('/reviews', async (req, res) => {
     try {
-        const id  = req.params;
-        const review = await User.findOne({ _id: ObjectId(id) });
-        res.send(review)
+        let query = {};
+        if(req.query.email) {
+            query = {
+                email: req.query.email
+            }
+        }
+        const cursor = User.find(query);
+        const reviews = await cursor.toArray();
+        res.send(reviews);
 
+    } catch(error) {
+        console.log(error.name.red, error.message.bold);
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+app.delete('/reviews/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const query = { _id: ObjectId(id) }
+        const result = await User.deleteOne(query);
+        res.send(result);
     } catch(error) {
         console.log(error.name.red, error.message.bold);
         res.send({

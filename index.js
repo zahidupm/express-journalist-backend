@@ -192,10 +192,15 @@ app.patch('/reviews/:id', async(req, res) => {
 // data mongodb theke pawar jonno
 app.get('/services', async (req, res) => {
     try {
+
+        const page = parseInt(req.query.page);
+        const size = parseInt(req.query.size);
+        // console.log(page, size);
         const query = {};
         const cursor = Product.find(query);
-        const services = await cursor.toArray();
-        res.send(services);
+        const services = await cursor.skip(page*size).limit(size).toArray();
+        const count = await Product.estimatedDocumentCount();
+        res.send({count, services});
     } catch (error) {
         console.log(error.name.red, error.message.bold);
         res.send({
@@ -210,6 +215,8 @@ app.post('/services', async (req, res) => {
     try {
         const result = await Product.insertOne(req.body);
         // console.log(result);
+        // result.unshift(result)
+
 
         if(result.insertedId) {
             res.send({

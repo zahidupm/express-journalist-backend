@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 require('colors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -30,6 +31,40 @@ dbConnect();
 const Product = client.db('expressJournalist').collection('services');
 const User = client.db('expressJournalist').collection('reviews');
 
+
+function verifyJWT (req, res, next) {
+    // console.log(req.headers.authorization);
+    const authHeader = req.headers.authorization;
+    if(!authHeader) {
+        res.status(401).send({message: 'unauthorized access'})
+    }
+    const token = authHeader.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if(err) {
+            res.status(401).send({message: 'unauthorized access'})
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
+//jwt
+app.post('/jwt', (req, res) => {
+    try {
+        const user = req.body;
+        // console.log(user);
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
+        res.send({token});
+
+    } catch (error) {
+        console.log(error.name.red, error.message.bold);
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 // review ====
 // data transfer
 app.post('/reviews', async (req, res) => {
@@ -53,12 +88,38 @@ app.post('/reviews', async (req, res) => {
 })
 
 // get the data
-app.get('/reviews', async (req, res) => {
+app.get('/reviews', verifyJWT, async (req, res) => {
     try {
+        const decoded = req.decoded;
+        // console.log('inside review', decoded);
+        if(decoded.email !== req.query.email) {
+            res.status(403).send({message: 'unauthorized access'});
+        }
         let query = {};
         if(req.query.email) {
             query = {
                 email: req.query.email
+            }
+        }
+        const cursor = User.find(query);
+        const reviews = await cursor.toArray();
+        res.send(reviews);
+
+    } catch(error) {
+        console.log(error.name.red, error.message.bold);
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+app.get('/reviews', async (req, res) => {
+    try {
+        let query = {};
+        if(req.query.service) {
+            query = {
+                service: req.query.service
             }
         }
         const cursor = User.find(query);
@@ -85,6 +146,45 @@ app.delete('/reviews/:id', async (req, res) => {
         res.send({
             success: false,
             message: error.message
+        })
+    }
+})
+
+// 
+app.get('/reviews/:id', async (req, res) => {
+    try {
+        const id  = req.params;
+        const review = await User.findOne({ _id: ObjectId(id) });
+        res.send(review)
+    } catch (error) {
+        console.log(error.name.red, error.message.bold);
+        res.send({
+            success: false,
+            error: error.message
+        })
+    }
+})
+
+// UPDATE
+app.patch('/reviews/:id', async(req, res) => {
+    const {id} = req.params;
+    try {
+        const result = await User.updateOne({ _id: ObjectId(id)} , {$set: req.body});
+        if (result.matchedCount) {
+            res.send({
+                success: true,
+                message: `Successfully updated ${req.body.name}`
+            })
+        } else {
+            res.send({
+                success: false,
+                error: error.message
+            })
+        }
+    } catch (error) {
+        res.send({
+            success: false,
+            error: error.message
         })
     }
 })
